@@ -125,7 +125,7 @@ func (h *Host) HostInterfaces() []*NetInterface {
 		}
 	}
 
-	return nil
+	return nics
 }
 
 func (h *Host) FromJSON(hostJSON string) {
