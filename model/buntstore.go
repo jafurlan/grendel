@@ -432,10 +432,12 @@ func (s *BuntStore) LoadHostFromMAC(macs []string) (*Host, error) {
 		err := tx.AscendKeys(HostKeyPrefix+":*", func(key, value string) bool {
 			res := gjson.Get(value, "interfaces")
 			for _, i := range res.Array() {
-				for _, m := range macs {
-					if i.Get("mac").String() == m {
-						hostJSON = value
-						return false
+				for _, im := range i.Get("mac").Array() {
+					for _, m := range macs {
+						if im.String() == m {
+							hostJSON = value
+							return false
+						}
 					}
 				}
 			}
