@@ -162,6 +162,7 @@ func (h *Handler) verifyClaims(c echo.Context) (*model.BootImage, *model.Host, *
 		"endpoints":       endpoints,
 		"bootimage":       bootImage,
 		"nic":             nic,
+		"hostIfaces":      host.HostInterfaces(),
 		"host":            host,
 		"headers":         c.Request().Header,
 		"rootpw":          viper.GetString("provision.root_password"),
