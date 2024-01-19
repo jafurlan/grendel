@@ -70,7 +70,7 @@ func TestInvalidBootToken(t *testing.T) {
 	assert := assert.New(t)
 
 	host := tests.HostFactory.MustCreate().(*model.Host)
-	token, err := model.NewBootToken(host.ID.String(), host.Interfaces[0].MAC.String())
+	token, err := model.NewBootToken(host.ID.String(), host.Interfaces[0].MacStringArr())
 	assert.NoError(err)
 	badToken := []byte(token)
 	badToken[2] = 'a'
@@ -119,7 +119,7 @@ func TestIpxe(t *testing.T) {
 	err = h.DB.StoreHost(host)
 	assert.NoError(err)
 
-	token, err := model.NewBootToken(host.ID.String(), host.Interfaces[0].MAC.String())
+	token, err := model.NewBootToken(host.ID.String(), host.Interfaces[0].MacStringArr())
 	assert.NoError(err)
 
 	e := newTestEcho(t)
@@ -156,7 +156,7 @@ func TestHostNotProvision(t *testing.T) {
 	err = h.DB.StoreHost(host)
 	assert.NoError(err)
 
-	token, err := model.NewBootToken(host.ID.String(), host.Interfaces[0].MAC.String())
+	token, err := model.NewBootToken(host.ID.String(), host.Interfaces[0].MacStringArr())
 	assert.NoError(err)
 
 	for path, handler := range paths {
@@ -198,7 +198,7 @@ func TestIpxeWrongHost(t *testing.T) {
 
 	hostBad := tests.HostFactory.MustCreate().(*model.Host)
 
-	token, err := model.NewBootToken(hostBad.ID.String(), hostBad.Interfaces[0].MAC.String())
+	token, err := model.NewBootToken(hostBad.ID.String(), hostBad.Interfaces[0].MacStringArr())
 	assert.NoError(err)
 
 	e := newTestEcho(t)
@@ -236,7 +236,7 @@ func TestKickstart(t *testing.T) {
 	err = h.DB.StoreHost(host)
 	assert.NoError(err)
 
-	token, err := model.NewBootToken(host.ID.String(), host.Interfaces[0].MAC.String())
+	token, err := model.NewBootToken(host.ID.String(), host.Interfaces[0].MacStringArr())
 	assert.NoError(err)
 
 	e := newTestEcho(t)
@@ -269,7 +269,7 @@ func TestUnprovision(t *testing.T) {
 	err = h.DB.StoreHost(host)
 	assert.NoError(err)
 
-	token, err := model.NewBootToken(host.ID.String(), host.Interfaces[0].MAC.String())
+	token, err := model.NewBootToken(host.ID.String(), host.Interfaces[0].MacStringArr())
 	assert.NoError(err)
 
 	e := newTestEcho(t)
@@ -280,7 +280,7 @@ func TestUnprovision(t *testing.T) {
 	c.SetParamNames("token")
 	c.SetParamValues(token)
 
-	if assert.NoError(TokenRequired(h.Unprovision)(c)) {
+	if assert.NoError(TokenRequired(h.Complete)(c)) {
 		assert.Equal(http.StatusOK, rec.Code)
 		assert.Equal("ok", gjson.Get(rec.Body.String(), "status").String())
 	}
@@ -306,7 +306,7 @@ func TestUserData(t *testing.T) {
 	err = h.DB.StoreHost(host)
 	assert.NoError(err)
 
-	token, err := model.NewBootToken(host.ID.String(), host.Interfaces[0].MAC.String())
+	token, err := model.NewBootToken(host.ID.String(), host.Interfaces[0].MacStringArr())
 	assert.NoError(err)
 
 	e := newTestEcho(t)
@@ -339,7 +339,7 @@ func TestMetaData(t *testing.T) {
 	err = h.DB.StoreHost(host)
 	assert.NoError(err)
 
-	token, err := model.NewBootToken(host.ID.String(), host.Interfaces[0].MAC.String())
+	token, err := model.NewBootToken(host.ID.String(), host.Interfaces[0].MacStringArr())
 	assert.NoError(err)
 
 	e := newTestEcho(t)

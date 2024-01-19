@@ -48,7 +48,6 @@ var (
 			if err != nil {
 				return err
 			}
-
 			var hostList model.HostList
 
 			if len(args) == 1 && strings.ToLower(args[0]) == "all" {

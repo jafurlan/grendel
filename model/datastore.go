@@ -112,7 +112,7 @@ type DataStore interface {
 	LoadHostFromName(name string) (*Host, error)
 
 	// LoadHostFromMAC returns the Host that has a network interface with the give MAC address
-	LoadHostFromMAC(mac string) (*Host, error)
+	LoadHostFromMAC(macs []string) (*Host, error)
 
 	// ResolveIPv4 returns the list of IPv4 addresses with the given FQDN
 	ResolveIPv4(fqdn string) ([]net.IP, error)

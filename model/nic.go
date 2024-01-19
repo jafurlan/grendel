@@ -37,23 +37,23 @@ type Subnet struct {
 }
 
 type NetInterface struct {
-	MAC  net.HardwareAddr `json:"mac" validate:"required"`
-	Name string           `json:"ifname"`
-	IP   netip.Prefix     `json:"ip"`
-	FQDN string           `json:"fqdn"`
-	BMC  bool             `json:"bmc"`
-	VLAN string           `json:"vlan"`
-	MTU  uint16           `json:"mtu,omitempty"`
+	MAC  []net.HardwareAddr `json:"mac" validate:"required"`
+	Name string             `json:"ifname"`
+	IP   netip.Prefix       `json:"ip"`
+	FQDN string             `json:"fqdn"`
+	BMC  bool               `json:"bmc"`
+	VLAN string             `json:"vlan"`
+	MTU  uint16             `json:"mtu,omitempty"`
 }
 
 func (n *NetInterface) MarshalJSON() ([]byte, error) {
 	type Alias NetInterface
 	return json.Marshal(&struct {
-		MAC string `json:"mac"`
-		IP  string `json:"ip"`
+		MAC []string `json:"mac"`
+		IP  string   `json:"ip"`
 		*Alias
 	}{
-		MAC:   n.MAC.String(),
+		MAC:   n.MacStringArr(),
 		IP:    n.CIDR(),
 		Alias: (*Alias)(n),
 	})
@@ -62,8 +62,8 @@ func (n *NetInterface) MarshalJSON() ([]byte, error) {
 func (n *NetInterface) UnmarshalJSON(data []byte) error {
 	type Alias NetInterface
 	aux := &struct {
-		MAC string `json:"mac"`
-		IP  string `json:"ip"`
+		MAC []string `json:"mac"`
+		IP  string   `json:"ip"`
 		*Alias
 	}{
 		Alias: (*Alias)(n),
@@ -71,13 +71,15 @@ func (n *NetInterface) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
-	if aux.MAC != "" {
-		mac, err := net.ParseMAC(aux.MAC)
-		if err != nil {
-			return err
-		}
+	if len(aux.MAC) != 0 {
+		for _, mac := range aux.MAC {
+			m, err := net.ParseMAC(mac)
+			if err != nil {
+				return err
+			}
 
-		n.MAC = mac
+			n.MAC = append(n.MAC, m)
+		}
 	}
 
 	if aux.IP != "" {
@@ -89,6 +91,14 @@ func (n *NetInterface) UnmarshalJSON(data []byte) error {
 		n.IP = ip
 	}
 	return nil
+}
+
+func (n *NetInterface) MacStringArr() []string {
+	mac := make([]string, len(n.MAC))
+	for i, m := range n.MAC {
+		mac[i] = m.String()
+	}
+	return mac
 }
 
 func (n *NetInterface) CIDR() string {

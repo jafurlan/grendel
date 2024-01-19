@@ -18,7 +18,6 @@
 package model
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -83,10 +82,15 @@ func (h *Host) HasAnyTags(tags ...string) bool {
 	return false
 }
 
-func (h *Host) Interface(mac net.HardwareAddr) *NetInterface {
+// Interface returns the first interface that matches any given MAC in the input array
+func (h *Host) Interface(searchMac []net.HardwareAddr) *NetInterface {
 	for _, nic := range h.Interfaces {
-		if bytes.Compare(nic.MAC, mac) == 0 {
-			return nic
+		for _, nicMac := range nic.MAC {
+			for _, s := range searchMac {
+				if nicMac.String() == s.String() {
+					return nic
+				}
+			}
 		}
 	}
 
@@ -123,6 +127,15 @@ func (h *Host) FromJSON(hostJSON string) {
 	h.Interfaces = make([]*NetInterface, 0)
 	res := gjson.Get(hostJSON, "interfaces")
 	for _, i := range res.Array() {
+		macs := []net.HardwareAddr{}
+		for _, m := range i.Get("mac").Array() {
+			macStr := m.String()
+			if macStr == "" {
+				continue
+			}
+			mac, _ := net.ParseMAC(macStr)
+			macs = append(macs, mac)
+		}
 		nic := &NetInterface{}
 		nic.Name = i.Get("ifname").String()
 		nic.FQDN = i.Get("fqdn").String()
@@ -130,7 +143,7 @@ func (h *Host) FromJSON(hostJSON string) {
 		nic.VLAN = i.Get("vlan").String()
 		nic.MTU = uint16(i.Get("mtu").Int())
 		nic.IP, _ = netip.ParsePrefix(i.Get("ip").String())
-		nic.MAC, _ = net.ParseMAC(i.Get("mac").String())
+		nic.MAC = macs
 		h.Interfaces = append(h.Interfaces, nic)
 	}
 
@@ -152,8 +165,15 @@ func (h *Host) ToJSON() string {
 	hostJSON, _ = sjson.Set(hostJSON, "provision", h.Provision)
 
 	for _, nic := range h.Interfaces {
+		macs := ""
+		for _, m := range nic.MAC {
+			if macs != "" {
+				macs += ","
+			}
+			macs += m.String()
+		}
 		n := map[string]interface{}{
-			"mac":    nic.MAC.String(),
+			"mac":    macs,
 			"ip":     nic.CIDR(),
 			"ifname": nic.Name,
 			"fqdn":   nic.FQDN,

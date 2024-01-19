@@ -42,7 +42,7 @@ func (s *Server) setZTD(host *model.Host, nic *model.NetInterface, serverIP net.
 			"name": host.Name,
 		}).Info("Host tagged with Arista ZTP. Setting bootfile URL and config dhcp options")
 
-		token, _ := model.NewBootToken(host.ID.String(), nic.MAC.String())
+		token, _ := model.NewBootToken(host.ID.String(), nic.MacStringArr())
 		endpoints := model.NewEndpoints(serverIP.String(), token)
 
 		configURL := endpoints.KickstartURL()
@@ -60,7 +60,7 @@ func (s *Server) setZTD(host *model.Host, nic *model.NetInterface, serverIP net.
 			"name": host.Name,
 		}).Info("Host tagged with Dell BMP. Setting FTOS image URL and config dhcp options")
 
-		token, _ := model.NewBootToken(host.ID.String(), nic.MAC.String())
+		token, _ := model.NewBootToken(host.ID.String(), nic.MacStringArr())
 		endpoints := model.NewEndpoints(serverIP.String(), token)
 
 		imageURL := endpoints.KernelURL()
@@ -86,7 +86,7 @@ func (s *Server) setZTD(host *model.Host, nic *model.NetInterface, serverIP net.
 			"name": host.Name,
 		}).Info("Host tagged with Dell ZTD. Setting ZTD provision URL dhcp option")
 
-		token, _ := model.NewBootToken(host.ID.String(), nic.MAC.String())
+		token, _ := model.NewBootToken(host.ID.String(), nic.MacStringArr())
 		endpoints := model.NewEndpoints(serverIP.String(), token)
 
 		provisionURL := endpoints.KickstartURL()
@@ -103,7 +103,7 @@ func (s *Server) setZTD(host *model.Host, nic *model.NetInterface, serverIP net.
 			"name": host.Name,
 		}).Info("Host is Mellanox ZTP. Setting bootfile URL and config dhcp options")
 
-		token, _ := model.NewBootToken(host.ID.String(), nic.MAC.String())
+		token, _ := model.NewBootToken(host.ID.String(), nic.MacStringArr())
 		endpoints := model.NewEndpoints(serverIP.String(), token)
 
 		configURL, configFilename := endpoints.KickstartURLParts()
@@ -123,7 +123,7 @@ func (s *Server) setZTD(host *model.Host, nic *model.NetInterface, serverIP net.
 }
 
 func (s *Server) staticHandler4(host *model.Host, serverIP net.IP, req, resp *dhcpv4.DHCPv4) error {
-	nic := host.Interface(req.ClientHWAddr)
+	nic := host.Interface([]net.HardwareAddr{req.ClientHWAddr})
 	if nic == nil {
 		log.Warnf("invalid mac address for host: %s", req.ClientHWAddr)
 		return nil
@@ -170,7 +170,7 @@ func (s *Server) staticHandler4(host *model.Host, serverIP net.IP, req, resp *dh
 	s.setZTD(host, nic, serverIP, req, resp)
 
 	if req.ClassIdentifier() == "iDRAC" && host.Provision {
-		token, _ := model.NewBootToken(host.ID.String(), nic.MAC.String())
+		token, _ := model.NewBootToken(host.ID.String(), nic.MacStringArr())
 		scpFileLocation := fmt.Sprintf("-f idrac-config.json -i %s -s 5 -n boot/%s/provision", serverIP.String(), token)
 		log.Debugf("Dell iDRAC Auto Config SCP location: %s", scpFileLocation)
 		resp.UpdateOption(dhcpv4.Option{Code: dhcpv4.OptionVendorSpecificInformation, Value: dhcpv4.String(scpFileLocation)})
@@ -202,7 +202,7 @@ func (s *Server) staticAckHandler4(host *model.Host, serverIP net.IP, req, resp 
 		requestedIP = req.ClientIPAddr
 	}
 
-	nic := host.Interface(req.ClientHWAddr)
+	nic := host.Interface([]net.HardwareAddr{req.ClientHWAddr})
 	if !nic.ToStdAddr().Equal(requestedIP) {
 		// Need to return NACK here. The client is asking for a different IP
 		// address than what's configured in Grendel.

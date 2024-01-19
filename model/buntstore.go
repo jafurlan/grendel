@@ -425,16 +425,18 @@ func (s *BuntStore) ReverseResolve(ip string) ([]string, error) {
 }
 
 // LoadHostFromMAC returns the Host that has a network interface with the give MAC address
-func (s *BuntStore) LoadHostFromMAC(mac string) (*Host, error) {
+func (s *BuntStore) LoadHostFromMAC(macs []string) (*Host, error) {
 	hostJSON := ""
 
 	err := s.db.View(func(tx *buntdb.Tx) error {
 		err := tx.AscendKeys(HostKeyPrefix+":*", func(key, value string) bool {
 			res := gjson.Get(value, "interfaces")
 			for _, i := range res.Array() {
-				if i.Get("mac").String() == mac {
-					hostJSON = value
-					return false
+				for _, m := range macs {
+					if i.Get("mac").String() == m {
+						hostJSON = value
+						return false
+					}
 				}
 			}
 
@@ -449,7 +451,7 @@ func (s *BuntStore) LoadHostFromMAC(mac string) (*Host, error) {
 	}
 
 	if hostJSON == "" {
-		return nil, fmt.Errorf("no host found with mac address %s:  %w", mac, ErrNotFound)
+		return nil, fmt.Errorf("no host found with mac addresses %s:  %w", strings.Join(macs, ","), ErrNotFound)
 	}
 
 	host := &Host{}

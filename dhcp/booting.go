@@ -74,7 +74,7 @@ func (s *Server) bootingHandler4(host *model.Host, serverIP net.IP, req, resp *d
 
 		resp.UpdateOption(dhcpv4.OptTFTPServerName(serverIP.String()))
 
-		token, err := model.NewFirmwareToken(req.ClientHWAddr.String(), fwtype)
+		token, err := model.NewFirmwareToken([]string{req.ClientHWAddr.String()}, fwtype)
 		if err != nil {
 			return fmt.Errorf("UNDI failed to generated signed Firmware token")
 		}
@@ -87,7 +87,7 @@ func (s *Server) bootingHandler4(host *model.Host, serverIP net.IP, req, resp *d
 
 		resp.UpdateOption(dhcpv4.OptTFTPServerName(serverIP.String()))
 
-		token, err := model.NewFirmwareToken(req.ClientHWAddr.String(), fwtype)
+		token, err := model.NewFirmwareToken([]string{req.ClientHWAddr.String()}, fwtype)
 		if err != nil {
 			return fmt.Errorf("iPXE firmware - failed to generated signed Firmware token")
 		}
@@ -102,7 +102,7 @@ func (s *Server) bootingHandler4(host *model.Host, serverIP net.IP, req, resp *d
 		}
 		resp.UpdateOption(dhcpv4.OptTFTPServerName(serverIP.String()))
 
-		token, err := model.NewFirmwareToken(req.ClientHWAddr.String(), fwtype)
+		token, err := model.NewFirmwareToken([]string{req.ClientHWAddr.String()}, fwtype)
 		if err != nil {
 			return fmt.Errorf("EFI failed to generated signed Firmware token")
 		}
@@ -110,7 +110,7 @@ func (s *Server) bootingHandler4(host *model.Host, serverIP net.IP, req, resp *d
 
 	case firmware.GRENDEL:
 		// Chainload to HTTP
-		token, err := model.NewBootToken(host.ID.String(), req.ClientHWAddr.String())
+		token, err := model.NewBootToken(host.ID.String(), []string{req.ClientHWAddr.String()})
 		if err != nil {
 			return fmt.Errorf("Failed to generate signed boot token: %s", err)
 		}

@@ -27,8 +27,8 @@ import (
 )
 
 type BootClaims struct {
-	ID  string `json:"id"`
-	MAC string `json:"mac"`
+	ID  string   `json:"id"`
+	MAC []string `json:"mac"`
 }
 
 func init() {
@@ -43,7 +43,7 @@ func init() {
 	}
 }
 
-func NewBootToken(id, mac string) (string, error) {
+func NewBootToken(id string, mac []string) (string, error) {
 	claims := &BootClaims{
 		ID:  id,
 		MAC: mac,
@@ -83,7 +83,7 @@ func ParseBootToken(token string) (*BootClaims, error) {
 	return &claims, nil
 }
 
-func NewFirmwareToken(mac string, fwtype firmware.Build) (string, error) {
+func NewFirmwareToken(mac []string, fwtype firmware.Build) (string, error) {
 	b := branca.NewBranca(viper.GetString("provision.secret"))
 	b.SetTTL(viper.GetUint32("provision.token_ttl"))
 

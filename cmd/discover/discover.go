@@ -127,10 +127,10 @@ func addNic(name, fqdn string, mac net.HardwareAddr, stdIP net.IP, isBMC bool) {
 		}
 	}
 
-	nic := host.Interface(mac)
+	nic := host.Interface([]net.HardwareAddr{mac})
 	if nic == nil {
 		nic = &model.NetInterface{
-			MAC:  mac,
+			MAC:  []net.HardwareAddr{mac},
 			IP:   ip,
 			FQDN: fqdn,
 			BMC:  isBMC,

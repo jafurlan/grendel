@@ -117,16 +117,20 @@ func (h *Handler) verifyClaims(c echo.Context) (*model.BootImage, *model.Host, *
 		return nil, nil, nil, nil, echo.NewHTTPError(http.StatusBadRequest, "host not set to provision")
 	}
 
-	mac, err := net.ParseMAC(claims.MAC)
-	if err != nil {
-		log.WithFields(logrus.Fields{
-			"host_id": claims.ID,
-			"mac":     claims.MAC,
-		}).Error("got invalid mac address")
-		return nil, nil, nil, nil, echo.NewHTTPError(http.StatusBadRequest, "invalid mac address").SetInternal(err)
+	macs := make([]net.HardwareAddr, len(claims.MAC))
+	for i, m := range claims.MAC {
+		mac, err := net.ParseMAC(m)
+		if err != nil {
+			log.WithFields(logrus.Fields{
+				"host_id": claims.ID,
+				"mac":     claims.MAC,
+			}).Error("got invalid mac address")
+			return nil, nil, nil, nil, echo.NewHTTPError(http.StatusBadRequest, "invalid mac address").SetInternal(err)
+		}
+		macs[i] = mac
 	}
 
-	nic := host.Interface(mac)
+	nic := host.Interface(macs)
 	if nic == nil {
 		log.WithFields(logrus.Fields{
 			"host_id": claims.ID,
@@ -367,7 +371,7 @@ func (h *Handler) Onie(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "")
 	}
 
-	host, err := h.DB.LoadHostFromMAC(onie.MAC.String())
+	host, err := h.DB.LoadHostFromMAC([]string{onie.MAC.String()})
 	if err != nil {
 		if errors.Is(err, model.ErrNotFound) {
 			log.Debugf("Ignoring unknown host mac address: %s", onie.MAC)

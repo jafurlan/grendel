@@ -64,7 +64,7 @@ var (
 					nic = host.Interfaces[0]
 				}
 
-				token, err := model.NewBootToken(host.ID.String(), nic.MAC.String())
+				token, err := model.NewBootToken(host.ID.String(), nic.MacStringArr())
 				if err != nil {
 					return fmt.Errorf("Failed to generate signed boot token for host %s: %s", host.Name, err)
 				}

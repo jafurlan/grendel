@@ -176,7 +176,12 @@ func (h *Handler) EditHost(f *fiber.Ctx) error {
 	var interfaces []*model.NetInterface
 
 	for i, iface := range ifaces {
-		mac, _ := net.ParseMAC(iface.MAC)
+		// TODO: reduce this
+		macs := []net.HardwareAddr{}
+		for _, mac := range strings.Split(iface.MAC, ",") {
+			m, _ := net.ParseMAC(mac)
+			macs = append(macs, m)
+		}
 		ip, _ := netip.ParsePrefix(iface.IP)
 		bmc, err := strconv.ParseBool(iface.BMC)
 		if err != nil {
@@ -190,7 +195,7 @@ func (h *Handler) EditHost(f *fiber.Ctx) error {
 		interfaces = append(interfaces, &model.NetInterface{
 			Name: iface.Name,
 			FQDN: iface.FQDN,
-			MAC:  mac,
+			MAC:  macs,
 			IP:   ip,
 			BMC:  bmc,
 			VLAN: iface.VLAN,
@@ -549,7 +554,11 @@ func (h *Handler) bulkHostAdd(f *fiber.Ctx) error {
 			}
 
 			fqdn := fmt.Sprintf("%s.%s", hostName, hostTableForm.Interfaces[i].Domain)
-			mac, _ := net.ParseMAC(iface.MAC)
+			macs := []net.HardwareAddr{}
+			for _, mac := range strings.Split(iface.MAC, ",") {
+				m, _ := net.ParseMAC(mac)
+				macs = append(macs, m)
+			}
 			ip, _ := netip.ParsePrefix(iface.IP)
 			bmc, err := strconv.ParseBool(hostTableForm.Interfaces[i].BMC)
 			if err != nil {
@@ -563,7 +572,7 @@ func (h *Handler) bulkHostAdd(f *fiber.Ctx) error {
 			newInterface = append(newInterface, &model.NetInterface{
 				Name: hostTableForm.Interfaces[i].Name,
 				FQDN: fqdn,
-				MAC:  mac,
+				MAC:  macs,
 				IP:   ip,
 				BMC:  bmc,
 				VLAN: hostTableForm.Interfaces[i].VLAN,

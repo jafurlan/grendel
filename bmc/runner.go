@@ -212,7 +212,7 @@ func (r *jobRunner) RunBmcImportConfiguration(host *model.Host, ch chan JobMessa
 		defer func() { ch <- m }()
 
 		ip := host.InterfaceBMC().AddrString()
-		token, err := model.NewBootToken(host.ID.String(), host.InterfaceBMC().MAC.String())
+		token, err := model.NewBootToken(host.ID.String(), host.InterfaceBMC().MacStringArr())
 		if err != nil {
 			m.Msg = fmt.Sprintf("%s", err)
 		}

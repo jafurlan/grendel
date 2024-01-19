@@ -105,7 +105,7 @@ func (s *Server) mainHandler4(peer *net.UDPAddr, req *dhcpv4.DHCPv4, oob *ipv4.C
 		return
 	}
 
-	host, err := s.DB.LoadHostFromMAC(req.ClientHWAddr.String())
+	host, err := s.DB.LoadHostFromMAC([]string{req.ClientHWAddr.String()})
 	if err != nil {
 		if errors.Is(err, model.ErrNotFound) {
 			log.Debugf("Ignoring unknown client mac address: %s", req.ClientHWAddr)

@@ -63,10 +63,10 @@ func TestBuntStoreHost(t *testing.T) {
 		assert.Equal(0, host.Interfaces[0].Addr().Compare(testHost2.Interfaces[0].Addr()))
 	}
 
-	testHost3, err := store.LoadHostFromMAC(host.Interfaces[0].MAC.String())
+	testHost3, err := store.LoadHostFromMAC(host.Interfaces[0].MacStringArr())
 	if assert.NoError(err) {
 		assert.Equal(host.Name, testHost3.Name)
-		assert.Equal(host.Interfaces[0].MAC.String(), testHost3.Interfaces[0].MAC.String())
+		assert.Equal(host.Interfaces[0].MacStringArr(), testHost3.Interfaces[0].MacStringArr())
 	}
 
 	testIPs, err := store.ResolveIPv4(host.Interfaces[0].FQDN)
@@ -99,7 +99,7 @@ func TestBuntStoreHost(t *testing.T) {
 		assert.True(errors.Is(err, model.ErrNotFound))
 	}
 
-	_, err = store.LoadHostFromMAC("notfound")
+	_, err = store.LoadHostFromMAC([]string{"notfound"})
 	if assert.Error(err) {
 		assert.True(errors.Is(err, model.ErrNotFound))
 	}

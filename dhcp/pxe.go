@@ -101,7 +101,7 @@ func NewPXEServer(db model.DataStore, address string) (*PXEServer, error) {
 }
 
 func (s *PXEServer) pxeHandler4(peer *net.UDPAddr, req *dhcpv4.DHCPv4, oob *ipv4.ControlMessage) {
-	host, err := s.DB.LoadHostFromMAC(req.ClientHWAddr.String())
+	host, err := s.DB.LoadHostFromMAC([]string{req.ClientHWAddr.String()})
 	if err != nil {
 		if !errors.Is(err, model.ErrNotFound) {
 			s.log.Errorf("failed to find host: %s", err)
@@ -163,7 +163,7 @@ func (s *PXEServer) pxeHandler4(peer *net.UDPAddr, req *dhcpv4.DHCPv4, oob *ipv4
 		resp.UpdateOption(dhcpv4.OptGeneric(dhcpv4.OptionClientMachineIdentifier, req.Options.Get(dhcpv4.OptionClientMachineIdentifier)))
 	}
 
-	token, err := model.NewFirmwareToken(req.ClientHWAddr.String(), fwtype)
+	token, err := model.NewFirmwareToken([]string{req.ClientHWAddr.String()}, fwtype)
 	if err != nil {
 		s.log.Errorf("Failed to generated signed firmware token: %v", err)
 		return

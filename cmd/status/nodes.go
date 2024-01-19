@@ -109,7 +109,7 @@ var (
 					macAddr := ""
 					if len(host.Interfaces) > 0 {
 						ipAddr = host.Interfaces[0].CIDR()
-						macAddr = host.Interfaces[0].MAC.String()
+						macAddr = strings.Join(host.Interfaces[0].MacStringArr(), ",")
 					}
 
 					bi := host.BootImage

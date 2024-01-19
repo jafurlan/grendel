@@ -36,7 +36,7 @@ func (h *Handler) hostForm(f *fiber.Ctx) error {
 
 	for i, iface := range host[0].Interfaces {
 		Interfaces[i].FQDN = iface.FQDN
-		Interfaces[i].MAC = iface.MAC.String()
+		Interfaces[i].MAC = strings.Join(iface.MacStringArr(), ",")
 		Interfaces[i].IP = iface.IP.String()
 		Interfaces[i].Name = iface.Name
 		Interfaces[i].BMC = strconv.FormatBool(iface.BMC)
