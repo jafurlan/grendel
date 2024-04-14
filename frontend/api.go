@@ -8,10 +8,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/a-h/templ"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/segmentio/ksuid"
 	"github.com/ubccr/grendel/bmc"
 	"github.com/ubccr/grendel/firmware"
+	"github.com/ubccr/grendel/frontend/views_templ/components"
 	"github.com/ubccr/grendel/model"
 	"github.com/ubccr/grendel/nodeset"
 )
@@ -492,6 +495,15 @@ func (h *Handler) Search(f *fiber.Ctx) error {
 
 	f.Response().Header.Add("HX-Redirect", fmt.Sprintf("/host/%s", search))
 	return nil
+}
+
+func (h *Handler) searchList(f *fiber.Ctx) error {
+	// search := f.FormValue("search")
+
+	hosts, _ := h.DB.Hosts()
+
+	componentHandler := templ.Handler(components.SearchOptions(hosts))
+	return adaptor.HTTPHandler(componentHandler)(f)
 }
 
 func (h *Handler) usersPost(f *fiber.Ctx) error {

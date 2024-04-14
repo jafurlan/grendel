@@ -8,6 +8,10 @@ TailwindCSS is used for client side HTML styling, changing the tailwind classes 
 
 Example command: `npx tailwind -i frontend/base.css -o frontend/public/tailwind.css --watch -c frontend/tailwind.config.js`
 
+### Templ rewrite
+
+Example command: `wgo -file=.go -file=.templ -xfile=_templ.go templ generate :: go run . serve frontend  -c grendel.toml --debug`
+
 ## VSCode
 
 This project uses Prettier and Tailwind VSCode plugins. Prettier uses the prettier-plugin-go-template and prettier-plugin-tailwindcss plugins.

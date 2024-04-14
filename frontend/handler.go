@@ -10,32 +10,24 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/spf13/viper"
-	"github.com/ubccr/grendel/bmc"
+	"github.com/ubccr/grendel/frontend/types"
 	"github.com/ubccr/grendel/model"
 )
 
 //go:embed public
 var embedFS embed.FS
 
-type EventStruct struct {
-	Time        string
-	User        string
-	Severity    string
-	Message     string
-	JobMessages []bmc.JobMessage
-}
-
 type Handler struct {
 	DB     model.DataStore
 	Store  *session.Store
-	Events []EventStruct
+	Events []types.EventStruct
 }
 
 func NewHandler(db model.DataStore, Store *session.Store) (*Handler, error) {
 	h := &Handler{
 		DB:     db,
 		Store:  Store,
-		Events: []EventStruct{},
+		Events: []types.EventStruct{},
 	}
 
 	return h, nil
@@ -54,11 +46,20 @@ func (h *Handler) SetupRoutes(app *fiber.App) {
 		}
 
 		sess, _ := h.Store.Get(c)
+		a := sess.Get("authenticated")
+		u := sess.Get("user")
+		r := sess.Get("role")
+		c.Context().SetUserValue("path", c.Path())
+		c.Context().SetUserValue("authenticated", a)
+		c.Context().SetUserValue("user", u)
+		c.Context().SetUserValue("role", r)
+		c.Context().SetUserValue("events", h.Events)
+
 		err = c.Bind(fiber.Map{
 			"Auth": fiber.Map{
-				"Authenticated": sess.Get("authenticated"),
-				"User":          sess.Get("user"),
-				"Role":          sess.Get("role"),
+				"Authenticated": a,
+				"User":          u,
+				"Role":          r,
 			},
 			"SearchList":  hostList,
 			"CurrentPath": c.Path(),
@@ -95,6 +96,7 @@ func (h *Handler) SetupRoutes(app *fiber.App) {
 	}
 
 	app.Get("/", h.Index)
+	app.Get("/templ", h.indexTempl)
 
 	app.Get("/login", h.Login)
 	api.Post("/auth/login", h.LoginUser)
@@ -128,12 +130,14 @@ func (h *Handler) SetupRoutes(app *fiber.App) {
 	api.Patch("/hosts/image", auth, h.imageHosts)
 	api.Get("/hosts/export/:hosts", auth, h.exportHosts)
 
-	app.Get("/users", admin, h.Users)
+	app.Get("/users", admin, h.users)
+	app.Get("/templ/users", admin, h.users)
 	api.Post("/users", admin, h.usersPost)
 	fragment.Get("/users/table", admin, h.usersTable)
 	api.Delete("/user/:username", admin, h.deleteUser)
 
 	api.Get("/search", auth, h.Search)
+	api.Get("/search/list", auth, h.searchList)
 
 	fragment.Get("/events", auth, h.events)
 

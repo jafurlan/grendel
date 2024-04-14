@@ -1,0 +1,201 @@
+package layouts
+
+import "github.com/ubccr/grendel/frontend/views_templ/components"
+import "github.com/ubccr/grendel/frontend/views_templ"
+import "github.com/ubccr/grendel/model"
+
+templ Base(hosts model.HostList, pages templ.Component) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<script src="/static/htmx.min.js"></script>
+			<script src="/static/loading-states.js"></script>
+			<script src="/static/notyf.min.js"></script>
+			<link rel="stylesheet" href="/static/notyf.min.css"/>
+			<link rel="stylesheet" href="/static/tailwind.css"/>
+			<title>Grendel</title>
+		</head>
+		<body class="flex min-h-screen flex-col bg-large-triangles-ub">
+			<div>
+				<nav class="bg-white p-4 xl:px-12">
+					<div class="flex justify-between">
+						<button
+							class="border-netural-300 block transform rounded-lg border p-1 px-2 transition-transform hover:text-neutral-700 active:scale-90 sm:hidden"
+							onclick="useTransition(() => showMobile())"
+						>
+							<span id="icon-bars" class="">
+								@components.Icon("bars-3")
+							</span>
+							<span id="icon-x" class="" hidden>
+								@components.Icon("x-mark")
+							</span>
+						</button>
+						<div class="flex whitespace-nowrap">
+							<img src="/favicon.ico" alt="UBCCR" width="{36}" height="{36}"/>
+							<div class="ml-2 mt-2 space-y-1 sm:my-auto sm:ml-4 sm:block *:rounded-md *:px-3 *:py-2 *:text-sm *:font-medium *:text-neutral-600" hidden>
+								// TODO: change /templ to / after integration
+								<a
+									class={ "hover:bg-neutral-200", templ.KV("bg-neutral-100", views.CtxString("path", ctx) == "/templ") }
+									href="/templ"
+									hx-boost="true"
+								>
+									Home
+								</a>
+								<a
+									class={ "hover:bg-neutral-200", templ.KV("bg-neutral-100", views.CtxString("path", ctx) == "/templ/floorplan") }
+									href="/templ/floorplan"
+									hx-boost="true"
+								>
+									Floorplan
+								</a>
+								if views.CtxString("role", ctx) == "admin" {
+									<a
+										class={ "hover:bg-neutral-200", templ.KV("bg-neutral-100", views.CtxString("path", ctx) == "/templ/users") }
+										href="/templ/users"
+										hx-boost="true"
+									>
+										Users
+									</a>
+								}
+							</div>
+						</div>
+						<div class="my-auto flex gap-4">
+							if views.CtxBool("authenticated", ctx) == false {
+								<a href="/login" id="login" hx-boost="true">Login</a>
+							} else {
+								<div class="mx-1 hidden sm:flex">
+									@components.Search(hosts)
+								</div>
+								<button class="rounded-md px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-200" hx-post="/api/auth/logout" hx-swap="none" id="logout">
+									Logout
+								</button>
+							}
+						</div>
+					</div>
+					<div id="mobile-menu" class="ml-2 mt-2 space-y-1 sm:hidden *:rounded-md *:px-3 *:py-2 *:text-sm *:font-medium *:text-neutral-600" hidden>
+						@components.Search(hosts)
+						<a
+							class={ "hover:bg-neutral-200 block", templ.KV("bg-neutral-100", views.CtxString("path", ctx) == "/") }
+							href="/"
+							hx-boost="true"
+						>
+							Home
+						</a>
+						<a
+							class={ "hover:bg-neutral-200 block", templ.KV("bg-neutral-100", views.CtxString("path", ctx) == "/floorplan") }
+							href="/floorplan"
+							hx-boost="true"
+						>
+							Floorplan
+						</a>
+						if views.CtxString("role", ctx) == "admin" {
+							<a
+								class={ "hover:bg-neutral-200 block", templ.KV("bg-neutral-100", views.CtxString("path", ctx) == "/users") }
+								href="/users"
+								hx-boost="true"
+							>
+								Users
+							</a>
+						}
+					</div>
+				</nav>
+				<div class="flex justify-center px-2 py-4 text-center">
+					<div class="w-full rounded-lg bg-white p-3 shadow-xl md:w-5/6" id="body">
+						<noscript>Woah buddy, you think this will just work without Javascript?</noscript>
+						@pages
+					</div>
+				</div>
+			</div>
+			<div class="flex-grow"></div>
+			<div class="sticky bottom-0">
+				<div
+					class={ "absolute bottom-0 right-0 -translate-x-2/3 -translate-y-2/3", templ.KV("hidden", views.CtxBool("authenticated", ctx) == false) }
+				>
+					<button
+						class="group relative z-10 rounded-md bg-blue-500 p-2 text-white shadow-lg hover:bg-blue-400"
+						onclick="showEventsModal()"
+					>
+						@components.Icon("bell")
+						<div
+							class="absolute right-0 top-0 -translate-y-1/3 translate-x-1/3 rounded-full bg-red-500 px-1 py-0 text-xs text-white group-hover:bg-red-400"
+							id="eventsCount"
+						>0</div>
+					</button>
+				</div>
+			</div>
+			<dialog id="eventsModal" class="h-5/6 w-full rounded-lg shadow-md md:w-2/3 lg:w-3/4">
+				<div class="flex h-full flex-col">
+					<div>
+						<div class="m-2 flex justify-center align-middle ">
+							<h1 class="rounded-xl border border-neutral-300 px-3 py-1 text-3xl shadow-lg">Notifications</h1>
+						</div>
+						<div
+							class="p-3"
+							hx-swap="innerHTML"
+							hx-get="/fragments/events"
+							hx-trigger="load, every 2s"
+							hx-disable?={ views.CtxString("role", ctx) == "disabled" || views.CtxBool("authenticated", ctx) == false }
+							hx-select-oob="#eventsCount:innerHTML"
+						></div>
+					</div>
+					<div class="flex-grow"></div>
+					<div
+						class="sticky bottom-0 flex w-full justify-end gap-3 border-t border-neutral-200 bg-neutral-50 p-3"
+					>
+						<button
+							type="button"
+							onclick="closeEventsModal()"
+							class="transform rounded-md border bg-neutral-500 px-2 py-1 text-white transition-transform hover:bg-neutral-400 active:scale-90"
+						>
+							Close
+						</button>
+					</div>
+				</div>
+			</dialog>
+		</body>
+		<script>
+        document.body.addEventListener("toast-error", function (e) {
+            let notyf = new Notyf({
+                duration: 5000,
+                dismissible: false,
+                ripple: false,
+                position: { x: "left", y: "bottom" },
+            });
+            notyf.error(e.detail.value);
+            console.error(e.detail.value);
+        });
+        document.body.addEventListener("toast-success", function (e) {
+            let notyf = new Notyf({
+                duration: 3000,
+                dismissible: false,
+                ripple: false,
+                position: { x: "left", y: "bottom" },
+            });
+            notyf.success(e.detail.value);
+            console.log(e.detail.value);
+        });
+
+        function showMobile() {
+            const m = document.getElementById("mobile-menu").hidden;
+            document.getElementById("mobile-menu").hidden = !m;
+            document.getElementById("icon-bars").hidden = m;
+            document.getElementById("icon-x").hidden = !m;
+        }
+        function showEventsModal() {
+            useTransition(() => document.getElementById("eventsModal").showModal());
+        }
+        function closeEventsModal() {
+            useTransition(() => document.getElementById("eventsModal").close());
+        }
+        function useTransition(func) {
+            if (!document.startViewTransition) {
+                return func();
+            } else {
+                document.startViewTransition(() => func());
+            }
+        }
+    </script>
+	</html>
+}

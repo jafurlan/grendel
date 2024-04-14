@@ -1,0 +1,31 @@
+package components
+
+import "github.com/ubccr/grendel/model"
+
+templ Search(hosts model.HostList) {
+	<form
+		hx-get="/api/search"
+		hx-swap="none"
+		class="group flex content-center gap-1 rounded-md border border-neutral-200 px-1"
+	>
+		<button
+			type="submit"
+			id="searchBtn"
+			class="float-left my-auto transform text-neutral-300 transition-transform hover:text-neutral-600 active:scale-90"
+		>
+			@Icon("magnifying-glass")
+		</button>
+		<input
+			hx-trigger="load, focus"
+			hx-target="#search"
+			hx-swap="innerHTML"
+			hx-get="/api/search/list"
+			type="search"
+			list="search"
+			name="search"
+			class="w-full rounded-md px-2 py-1"
+			id="searchInput"
+		/>
+		<datalist id="search"></datalist>
+	</form>
+}

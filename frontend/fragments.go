@@ -6,8 +6,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/a-h/templ"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/spf13/viper"
+	"github.com/ubccr/grendel/frontend/views_templ/pages"
 	"github.com/ubccr/grendel/model"
 	"github.com/ubccr/grendel/nodeset"
 	"github.com/ubccr/grendel/tors"
@@ -295,10 +298,14 @@ func (h *Handler) usersTable(f *fiber.Ctx) error {
 	if err != nil {
 		return ToastError(f, err, "Failed to load users")
 	}
+	s, err := h.Store.Get(f)
+	if err != nil {
+		return ToastError(f, err, "Failed to get session")
+	}
 
-	return f.Render("fragments/users/table", fiber.Map{
-		"Users": users,
-	}, "")
+	componentHandler := templ.Handler(pages.UserTable(users, s))
+	return adaptor.HTTPHandler(componentHandler)(f)
+
 }
 
 func (h *Handler) floorplanTable(f *fiber.Ctx) error {

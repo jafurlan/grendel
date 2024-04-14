@@ -1,0 +1,9 @@
+package components
+
+import "github.com/ubccr/grendel/model"
+
+templ SearchOptions(hosts model.HostList) {
+	for _, h := range hosts {
+		<option value={ h.Name }>{ h.Name }</option>
+	}
+}

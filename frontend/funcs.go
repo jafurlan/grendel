@@ -7,6 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/ubccr/grendel/bmc"
 	"github.com/ubccr/grendel/firmware"
+	"github.com/ubccr/grendel/frontend/types"
 )
 
 func (h *Handler) getFirmware() []string {
@@ -33,7 +34,7 @@ func (h *Handler) writeEvent(severity string, f *fiber.Ctx, message string) erro
 	}
 	// TODO: fix returns "%!s()" on first user registration
 	user := fmt.Sprintf("%s", sess.Get("user"))
-	e := EventStruct{
+	e := types.EventStruct{
 		Severity: severity,
 		Time:     time.Now().Format("Jan 02 - 03:04:05pm"),
 		User:     user,
@@ -42,7 +43,7 @@ func (h *Handler) writeEvent(severity string, f *fiber.Ctx, message string) erro
 
 	log.Debugf("User: %s - Severity: %s - Message: %s", e.User, e.Severity, e.Message)
 
-	h.Events = append([]EventStruct{e}, h.Events...)
+	h.Events = append([]types.EventStruct{e}, h.Events...)
 
 	if len(h.Events) > 50 {
 		h.Events = h.Events[:50]
@@ -60,7 +61,7 @@ func (h *Handler) writeJobEvent(f *fiber.Ctx, message string, jobMessages []bmc.
 	user := fmt.Sprintf("%s", sess.Get("user"))
 
 	// TODO: loop over jobMessages and tally success vs failure to determine severity
-	e := EventStruct{
+	e := types.EventStruct{
 		Severity:    "info",
 		Time:        time.Now().Format("Jan 02 - 03:04:05pm"),
 		User:        user,
@@ -70,7 +71,7 @@ func (h *Handler) writeJobEvent(f *fiber.Ctx, message string, jobMessages []bmc.
 
 	log.Debugf("User: %s - Severity: %s - Message: %s", e.User, e.Severity, e.Message)
 
-	h.Events = append([]EventStruct{e}, h.Events...)
+	h.Events = append([]types.EventStruct{e}, h.Events...)
 
 	if len(h.Events) > 50 {
 		h.Events = h.Events[:50]

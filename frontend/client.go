@@ -3,13 +3,26 @@ package frontend
 import (
 	"fmt"
 
+	"github.com/a-h/templ"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
+	"github.com/ubccr/grendel/frontend/views_templ/layouts"
+	"github.com/ubccr/grendel/frontend/views_templ/pages"
 )
 
 func (h *Handler) Index(f *fiber.Ctx) error {
 	return f.Render("index", fiber.Map{
 		"Title": "Grendel",
 	})
+}
+func (h *Handler) indexTempl(f *fiber.Ctx) error {
+	hosts, err := h.DB.Hosts()
+	if err != nil {
+		return err
+	}
+
+	componentHandler := templ.Handler(layouts.Base(hosts, pages.Index()))
+	return adaptor.HTTPHandler(componentHandler)(f)
 }
 
 func (h *Handler) Register(f *fiber.Ctx) error {
@@ -46,8 +59,11 @@ func (h *Handler) Host(f *fiber.Ctx) error {
 	})
 }
 
-func (h *Handler) Users(f *fiber.Ctx) error {
-	return f.Render("users", fiber.Map{
-		"Title": "Grendel - Users",
-	})
+func (h *Handler) users(f *fiber.Ctx) error {
+	hosts, err := h.DB.Hosts()
+	if err != nil {
+		return err
+	}
+	componentHandler := templ.Handler(layouts.Base(hosts, pages.Users()))
+	return adaptor.HTTPHandler(componentHandler)(f)
 }

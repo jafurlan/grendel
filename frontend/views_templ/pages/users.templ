@@ -1,0 +1,102 @@
+package pages
+
+import "github.com/ubccr/grendel/model"
+import "fmt"
+import "github.com/ubccr/grendel/frontend/views_templ/components"
+import "github.com/gofiber/fiber/v2/middleware/session"
+
+templ Users() {
+	<div>
+		<div class="flex-col justify-center">
+			<div class="m-2 mb-4 flex justify-center align-middle ">
+				<h1 class="rounded-xl border border-neutral-300 px-3 py-1 text-3xl shadow-lg">Users:</h1>
+			</div>
+			<div
+				class="flex justify-center p-3"
+				hx-get="/fragments/users/table"
+				hx-swap="innerHTML transition:true"
+				hx-trigger="load, refresh from:body"
+			></div>
+			<form hx-post="/api/users" hx-vals="js:{Usernames: getUsers()}" hx-swap="none">
+				<div class="flex justify-center gap-3 p-3 align-middle">
+					<select class="rounded-md border border-neutral-400 px-2 py-1 shadow-sm" name="Role">
+						<option value="disabled">Disabled</option>
+						<option value="user">User</option>
+						<option value="admin">Admin</option>
+					</select>
+					<button
+						class="transform rounded-md bg-blue-500 px-2 py-1 text-white shadow-sm transition-transform active:scale-90"
+						type="submit"
+					>
+						Submit
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+	<script>
+    function getUsers() {
+        var userArr = [];
+        document.querySelectorAll("input[type=checkbox]").forEach((checkbox) => {
+            if (checkbox.checked) userArr.push(checkbox.name);
+        });
+        return userArr.join(",");
+    }
+</script>
+}
+
+templ UserTable(users []model.User, session *session.Session) {
+	<table class="table-fixed shadow-sm">
+		<thead>
+			<tr class="*:border-b *:border-gray-200 *:p-3 *:font-semibold *:text-gray-500">
+				<th>Username</th>
+				<th>Role</th>
+				<th>Created At</th>
+				<th>Modified At</th>
+				<th></th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			for _, u := range users {
+				<tr class="hover:bg-gray-50 *:border-b *:border-gray-200 *:p-3">
+					<td>{ u.Username }</td>
+					<td>
+						<span
+							class={
+								"rounded-md bg-gray-100 px-2 py-1 text-sm ring-1 ring-inset",
+								templ.KV("bg-red-50 ring-red-700/10 text-red-700", u.Role == "disabled"),
+								templ.KV("bg-green-50 ring-green-700/10 text-green-700", u.Role == "user"),
+								templ.KV("bg-blue-50 ring-blue-700/10 text-blue-700", u.Role == "admin"),
+							}
+						>
+							{ u.Role }
+						</span>
+					</td>
+					<td class="text-sm font-light">
+						{ u.CreatedAt.Format("Jan 02, 2006 15:04:05 MST") }
+					</td>
+					<td class="text-sm font-light">
+						{ u.ModifiedAt.Format("Jan 02, 2006 15:04:05 MST") }
+					</td>
+					<td>
+						<input type="checkbox" name={ u.Username } disabled?={ u.Username == session.Get("user") }/>
+					</td>
+					<td>
+						<div class="flex align-middle">
+							<button
+								class="h-7 w-7 rounded-full bg-red-50 p-1.5 text-red-700 ring-1 ring-inset ring-red-700/10 transition hover:text-red-500 active:scale-90 disabled:opacity-60"
+								hx-delete={ fmt.Sprintf("/api/user/%s", u.Username) }
+								hx-swap="none"
+								hx-confirm={ fmt.Sprintf("Are you sure you want to delete %s?", u.Username) }
+								disabled?={ u.Username == session.Get("user") }
+							>
+								@components.Icon("trash")
+							</button>
+						</div>
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}

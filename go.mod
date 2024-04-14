@@ -7,12 +7,13 @@ toolchain go1.21.0
 require (
 	github.com/GehirnInc/crypt v0.0.0-20230320061759-8cc1b52080c5
 	github.com/Pallinder/go-randomdata v1.2.0
+	github.com/a-h/templ v0.2.543
 	github.com/alouca/gosnmp v0.0.0-20170620005048-04d83944c9ab
 	github.com/bits-and-blooms/bitset v1.5.0
 	github.com/bluele/factory-go v0.0.0-20181130035244-e6e8633dd3fe
 	github.com/coreos/butane v0.14.1-0.20220513204719-6cd92788076e
 	github.com/dustin/go-humanize v1.0.1
-	github.com/fatih/color v1.13.0
+	github.com/fatih/color v1.16.0
 	github.com/go-playground/validator/v10 v10.0.1
 	github.com/hako/branca v0.0.0-20191227164554-3b9970524189
 	github.com/hashicorp/go-retryablehttp v0.6.6
@@ -84,7 +85,7 @@ require (
 	github.com/leodido/go-urn v1.2.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.19 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
