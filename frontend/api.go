@@ -10,6 +10,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/segmentio/ksuid"
+	"github.com/spf13/viper"
 	"github.com/ubccr/grendel/bmc"
 	"github.com/ubccr/grendel/firmware"
 	"github.com/ubccr/grendel/model"
@@ -153,6 +154,56 @@ type InterfacesString struct {
 	BMC  string `json:"bmc"`
 	VLAN string `json:"Vlan"`
 	MTU  string `json:"Mtu"`
+}
+
+func (h *Handler) TestRackApi(f *fiber.Ctx) error {
+	rack := f.Params("rack")
+
+	n, err := h.DB.FindTags([]string{rack})
+	if err != nil {
+		return ToastError(f, err, "Failed to find hosts tagged with rack")
+	}
+
+	hosts, err := h.DB.FindHosts(n)
+	if err != nil {
+		return ToastError(f, err, "Failed to find hosts")
+	}
+
+	type hostArrStruct struct {
+		U     string
+		Hosts model.HostList
+	}
+	hostArr := make([]hostArrStruct, 0)
+
+	viper.SetDefault("frontend.rack_min", 3)
+	viper.SetDefault("frontend.rack_max", 42)
+	min := viper.GetInt("frontend.rack_min")
+	max := viper.GetInt("frontend.rack_max")
+
+	for i := max; i >= min; i-- {
+		u := fmt.Sprintf("%02d", i)
+		h := model.HostList{}
+
+		for _, v := range hosts {
+			if v.HostType() == "power" && !v.HasAnyTags("1u", "2u") {
+				continue
+			}
+			nameArr := strings.Split(v.Name, "-")
+			if len(nameArr) < 2 {
+				log.Debugf("Invalid host name: %s", v.Name)
+				continue
+			}
+			if nameArr[2] == u {
+				h = append(h, v)
+			}
+		}
+
+		hostArr = append(hostArr, hostArrStruct{
+			U:     u,
+			Hosts: h,
+		})
+	}
+	return f.JSON(hostArr)
 }
 
 func (h *Handler) EditHost(f *fiber.Ctx) error {

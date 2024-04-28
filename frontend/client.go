@@ -18,6 +18,17 @@ func (h *Handler) Register(f *fiber.Ctx) error {
 	})
 }
 
+func (h *Handler) Test(f *fiber.Ctx) error {
+	return f.Render("test", fiber.Map{
+		"Title": "Grendel - Test",
+	})
+}
+func (h *Handler) TestRack(f *fiber.Ctx) error {
+	return f.Render("test_rack", fiber.Map{
+		"Title": "Grendel - Rack Test",
+	})
+}
+
 func (h *Handler) Login(f *fiber.Ctx) error {
 	return f.Render("login", fiber.Map{
 		"Title": "Grendel - Login",

@@ -1,13 +1,33 @@
 <div class="flex justify-center">
-    <div
-        class="overflow-auto"
-        hx-get="/fragments/floorplan/table"
-        hx-swap="innerHTML transition:true"
-        hx-trigger="load, refresh from:body"></div>
+    <div class="grid h-5/6 w-5/6">
+        <div
+            class="z-10 col-start-1 row-start-1 grid overflow-auto"
+            hx-get="/fragments/floorplan/table"
+            hx-swap="innerHTML transition:true"
+            hx-trigger="load, refresh from:body"></div>
+        <div id="heatmapContainer" class="size-72 col-start-1 row-start-1"></div>
+    </div>
 </div>
 
 <dialog id="addHost" class="h-5/6 w-full rounded-lg shadow-md md:w-2/3 lg:w-3/4"></dialog>
 <script>
+    var config = {
+        container: document.getElementById("heatmapContainer"),
+        radius: 50,
+        maxOpacity: 0.5,
+        minOpacity: 0,
+        blur: 0.75,
+    };
+    // create heatmap with configuration
+    var heatmapInstance = h337.create(config);
+
+    // multiple datapoints (for data initialization use setData!!)
+    var dataPoints = [
+        { x: 50, y: 50, value: 100 },
+        { x: 100, y: 100, value: 150 },
+    ];
+    heatmapInstance.addData(dataPoints);
+
     function showModal() {
         useTransition(() => document.getElementById("addHost").showModal());
     }
