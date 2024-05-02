@@ -24,8 +24,10 @@ func (h *Handler) Test(f *fiber.Ctx) error {
 	})
 }
 func (h *Handler) TestRack(f *fiber.Ctx) error {
+	rack := f.Params("rack")
 	return f.Render("test_rack", fiber.Map{
 		"Title": "Grendel - Rack Test",
+		"Rack":  rack,
 	})
 }
 
