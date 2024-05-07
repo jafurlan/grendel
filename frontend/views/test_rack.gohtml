@@ -140,7 +140,7 @@
             const cpuBreakpoint = 2
 
             const chassisMaterial = new THREE.MeshLambertMaterial({ color: "lightgray", wireframe: true });
-            const fanMaterial = new THREE.MeshLambertMaterial({ color: "lightgray", wireframe: true });
+            const fanMaterial = new THREE.MeshLambertMaterial({ color: "orange", wireframe: true });
 
             const hostBackZ = -srv_depth / 2 + (chassisThickness / 2) + (driveEnclosureThickness / 2)
 
@@ -149,22 +149,24 @@
             const hostChassisRightMesh = new THREE.Mesh(new THREE.BoxGeometry(chassisThickness, h, srv_depth - 5), chassisMaterial)
             const hostChassisLeftMesh = hostChassisRightMesh.clone()
             const hostChassisBackMesh = new THREE.Mesh(new THREE.BoxGeometry(srv_width, h, chassisThickness), chassisMaterial)
-            const hostFanMesh = new THREE.Mesh(new THREE.BoxGeometry(fanWidth, h, 1), fanMaterial)
-            const hostDimmMesh = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.4, 5), new THREE.MeshLambertMaterial({ color: "white" }))
-            const hostCpuMesh = new THREE.Mesh(new THREE.BoxGeometry(2, 0.1, 2), new THREE.MeshLambertMaterial({ color: "white" }))
+            const hostFanMesh = new THREE.Mesh(new THREE.BoxGeometry(fanWidth, h - chassisThickness, 1), fanMaterial)
+            const hostCpuMesh = new THREE.Mesh(new THREE.BoxGeometry(2, 0.1, 2), new THREE.MeshLambertMaterial({ color: "lightgray" }))
+            const hostDimmMesh = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 5), new THREE.MeshLambertMaterial({ color: "white" }))
 
             hostDriveEnclosureMesh.position.set(0, 0, srv_depth / 2)
             hostChassisBottomMesh.position.set(0, -h / 2 + (chassisThickness / 2), 0)
             hostChassisRightMesh.position.set(srv_width / 2 - (chassisThickness / 2), 0, 0)
             hostChassisLeftMesh.position.set(-srv_width / 2 + (chassisThickness / 2), 0, 0)
             hostChassisBackMesh.position.set(0, 0, hostBackZ)
+            hostCpuMesh.position.set(0, 0.1 / 2, 0)
+            hostDimmMesh.position.set(0, 0.4 / 2, 0)
 
             for (let i = 0; i < fanCount; i++) {
                 const fan = hostFanMesh.clone()
                 let leftStartingPos = -(srv_width / 2)
                 let startingOffset = fanWidth / 2
                 let firstFanPos = leftStartingPos + startingOffset
-                fan.position.set(firstFanPos + (fanWidth * i), 0, -hostBackZ - 0.5 )
+                fan.position.set(firstFanPos + (fanWidth * i), chassisThickness / 2, -hostBackZ - 0.5 )
                  // Label
                     const text = document.createElement("div");
                     text.className = "text-white";
@@ -180,9 +182,10 @@
 
             let cpuPosZ = 1
             for (let c = 1; c <= cpuCount; c++) {
-
-                console.log(c, cpuPosZ);
+                const cpuGroup = new THREE.Group();
                 const cpu = hostCpuMesh.clone()
+
+
                 let posX = -srv_width / 4
                 let posZ = -hostBackZ - (5 * cpuPosZ)
                 if (c % 2) {
@@ -190,18 +193,40 @@
                 } else {
                     cpuPosZ += 1
                 }
-                cpu.position.set(posX, 0, posZ)
-                 // Label
-                 const text = document.createElement("div");
+                cpuGroup.position.set(posX, -(h / 2) + chassisThickness, posZ)
+
+                // Label
+                const text = document.createElement("div");
+                text.className = "text-white";
+                text.textContent = `CPU ${c}`;
+
+                const label = new CSS2DObject(text);
+                label.visible = false;
+                label.position.set(0, 0.1, -1);
+                cpuGroup.name = "cpu"
+
+                // Memory
+                for (let m = 1; m <= dimmCount / cpuCount; m++) {
+                    const mem = hostDimmMesh.clone()
+                    let posX = m % 2 ? 0.2 * m + 1.5 : -(0.2 * m + 1.5)
+                    mem.position.x = posX
+
+                    // Label
+                    const text = document.createElement("div");
                     text.className = "text-white";
-                    text.textContent = `CPU ${c}`;
+                    text.textContent = `${String.fromCharCode((c - 1) % 26 + 65)}${m}`;
 
                     const label = new CSS2DObject(text);
                     label.visible = false;
-                    label.position.set(0, 0.1, 0);
-                    cpu.name = "cpu"
-                    cpu.add(label);
-                hostGroup.add(cpu)
+                    label.position.set(0, 0.2, -2.5);
+
+                    mem.add(label)
+                    cpuGroup.add(mem)
+                }
+
+                cpu.add(label);
+                cpuGroup.add(cpu)
+                hostGroup.add(cpuGroup)
             }
 
             // Label
@@ -241,58 +266,33 @@
         intersects = raycaster.intersectObjects(scene.children);
 
         if (intersects.length > 0 ) {
-            if (intersects[0].object.parent != intersected?.parent && intersected) {
-                new TWEEN.Tween(intersected.parent.position).to( { z:0 }, 200).start();
-                intersected.parent.children.find((c) => {
-                    if (c.isCSS2DObject) {
-                        c.visible = false;
-                    }
-                    if (c.name == "fan" || c.name == "cpu") {
-                        c.children[0].visible = false;
-                    }
-                });
+            if (intersects[0].object != intersected && intersected) {
+                intersected.children.find((c) => { if (c.isCSS2DObject) c.visible = false; });
             }
             intersected = intersects[0].object;
-            if (intersected.parent.position.z != 20) new TWEEN.Tween(intersected.parent.position).to( { z: 3 }, 200).start();
 
-            intersected.parent.children.find((c) => {
-                if (c.isCSS2DObject) {
-                    c.visible = true;
-                }
-            });
+            intersected.children.find((c) => { if (c.isCSS2DObject) c.visible = true; });
         } else {
             if (intersected) {
-                if (intersected.parent.position.z == 20) {
-                    new TWEEN.Tween(camera.position).to( { x: defaultCameraPos.x, y: defaultCameraPos.y, z: defaultCameraPos.z }, 400).easing(TWEEN.Easing.Cubic.InOut).start();
-                    new TWEEN.Tween(orbit.target).to( { x: defaultOrbitTarget.x, y: defaultOrbitTarget.y, z: defaultOrbitTarget.z }, 400).onUpdate(() => { orbit.update() }).easing(TWEEN.Easing.Cubic.InOut).start();
-                }
-                new TWEEN.Tween(intersected.parent.position).to( { z:0 }, 200).start();
-                intersected.parent.children.find((c) => {
-                    if (c.isCSS2DObject) {
-                        c.visible = false;
-                    }
-                    if (c.name == "fan" || c.name == "cpu") {
-                        c.children[0].visible = false;
-                    }
-                });
+                intersected.children.find((c) => { if (c.isCSS2DObject) c.visible = false; });
             }
             intersected = null;
         }
     });
 
     window.addEventListener("click", function (e) {
-        if (intersected) {
+        if (intersected && e.ctrlKey) {
             let pos = intersected.parent.position;
-            new TWEEN.Tween(camera.position).to( { x: 0, y: (pos.y + 20), z: 60 }, 400).easing(TWEEN.Easing.Cubic.InOut).start();
-            new TWEEN.Tween(orbit.target).to( { x: pos.x, y: pos.y, z: pos.z + 20 }, 400).onUpdate(() => { orbit.update() }).onComplete(() => { orbit.update() }).easing(TWEEN.Easing.Cubic.InOut).start();
-            new TWEEN.Tween(intersected.parent.position).to( { z: 20 }, 200).easing(TWEEN.Easing.Cubic.InOut).start();
 
-            // set fan labels
-            intersected.parent.children.find((c) => {
-                if (c.name == "fan" || c.name == "cpu") {
-                    c.children[0].visible = true;
-                }
-            });
+            if (pos.z != 0) {
+                // new TWEEN.Tween(camera.position).to( { x: defaultCameraPos.x, y: defaultCameraPos.y, z: defaultCameraPos.z }, 400).easing(TWEEN.Easing.Cubic.InOut).start();
+                // new TWEEN.Tween(orbit.target).to( { x: defaultOrbitTarget.x, y: defaultOrbitTarget.y, z: defaultOrbitTarget.z }, 400).onUpdate(() => { orbit.update() }).easing(TWEEN.Easing.Cubic.InOut).start();
+                new TWEEN.Tween(intersected.parent.position).to( { z: 0 }, 600).easing(TWEEN.Easing.Cubic.InOut).start();
+            } else {
+                new TWEEN.Tween(intersected.parent.position).to( { z: 30 }, 600).easing(TWEEN.Easing.Cubic.InOut).start();
+                new TWEEN.Tween(camera.position).to( { x: 0, y: (pos.y + 20), z: 60 }, 400).easing(TWEEN.Easing.Cubic.InOut).start();
+                new TWEEN.Tween(orbit.target).to( { x: pos.x, y: pos.y, z: pos.z + 35 }, 400).onUpdate(() => { orbit.update() }).onComplete(() => { orbit.update() }).easing(TWEEN.Easing.Cubic.InOut).start();
+            }
 
         }
     });
