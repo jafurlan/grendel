@@ -5,6 +5,5 @@
 package api
 
 const (
-	DefaultPort   = 6667
-	ContextKeyJWT = "grendelapi"
+	DefaultPort = 6667
 )
